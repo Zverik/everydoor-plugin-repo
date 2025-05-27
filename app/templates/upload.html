@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Upload a Plugin</h1>
+<p>You can also update an existing plugin from here by uploading a new version.</p>
+<form action="{{ url_for('.upload') }}" method="post" enctype="multipart/form-data">
+  {{ form.csrf_token }}
+  <div class="mb-3">
+    {{ form.package.label(class_='form-label') }} {{ form.package(class_='form-control') }}
+    {% for error in form.package.errors %}<div class="form-text">{{ error }}</div>{% endfor %}
+  </div>
+  <button class="btn btn-primary" type="submit">Upload</button>
+</form>
+{% endblock %}

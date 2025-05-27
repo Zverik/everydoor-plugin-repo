@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Deleting {{ plugin.title }} — Every Door Plugins{% endblock %}
+{% block content %}
+<h1>Really delete "{{ plugin.title }}"{% if version %} version {{ version.version_str }}{% endif %}?</h1>
+<p>This is irreversible. It's not too late to <a href="{{ url_for('.plugin', name=plugin.id) }}">go back</a>!</p>
+<form action="{{ request.url }}" method="POST">
+  <input type="hidden" name="really_delete" value="1">
+  <a class="btn btn-outline-primary" href="{{ url_for('.plugin', name=plugin.id) }}">No thanks</a>
+  <button class="btn btn-danger" type="submit">Delete</button>
+</form>
+{% endblock %}

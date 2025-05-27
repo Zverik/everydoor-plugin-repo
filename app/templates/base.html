@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>{% block title %}Every Door Plugins{% endblock %}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="{{ url_for('static', filename='bootstrap.min.css') }}" rel="stylesheet">
+    {% block header %}{% endblock %}
+    <style>.flashes { color: red; }</style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg bg-light">
+      <div class="container-xl">
+        <a class="navbar-brand" href="{{ url_for('plugins.list') }}">EDPR</a>
+        <ul class="navbar-nav justify-content-lg-center col-lg-6">
+          <li class="nav-item"><a class="nav-link" href="https://every-door.app">Every Door</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('plugins.list') }}">All Plugins</a></li>
+          {% if g.user %}
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('plugins.my') }}">My Plugins</a></li>
+          {% endif %}
+          <li class="nav-item"><a class="nav-link" href="https://every-door.app/docs/plugins/">Documentation</a></li>
+        </ul>
+        <div class="d-lg-flex justify-content-lg-end">
+          <form action="{{ url_for('plugins.search') }}" role="search" class="me-2 mb-2 mb-lg-0">
+            <input class="form-control" type="search" name="q" placeholder="Search" value="{{ search or '' }}">
+          </form>
+          {% if not g.user %}
+          <a class="btn btn-outline-primary me-2" href="{{ url_for('auth.login', next=request.url) }}">Login</a>
+          {% else %}
+          <a class="btn btn-primary me-2" href="{{ url_for('plugins.upload') }}">Upload</a>
+          <a class="btn btn-outline-primary me-2" href="{{ url_for('auth.logout', next=request.url) }}">Logout</a>
+          {% endif %}
+        </div>
+      </div>
+    </nav>
+    <div class="col-sm-8 mx-auto mt-4">
+      {% for message in get_flashed_messages() %}
+        <div class="alert alert-danger" role="alert">{{ message }}</div>
+      {% endfor %}
+      {% block content %}{% endblock %}
+    </div>
+    <script src="{{ url_for('static', filename='bootstrap.min.js') }}"></script>
+  </body>
+</html>

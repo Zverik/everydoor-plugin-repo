@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}{{ plugin.title }} {{version.version }} — Every Door Plugins{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('.plugin', name=plugin.id) }}">← back to the plugin</a></p>
+<h1>{{ plugin.title }} version {{ version.version_str }}</h1>
+<form action="{{ url_for('.version', name=plugin.id, version=version.version_str) }}" method="post">
+  {{ form.csrf_token }}
+  <div class="mb-3">
+    {{ form.changelog.label(class_='form-label') }} {{ form.changelog(rows=7, class_='form-control') }}
+    {% for error in form.changelog.errors %}<div class="form-text">{{ error }}</div>{% endfor %}
+  </div>
+  <button class="btn btn-primary" type="submit">Save</button>
+  <a class="btn btn-outline-primary" href="{{ url_for('.plugin', name=plugin.id) }}">Cancel</a>
+  <a class="btn btn-outline-danger" href="{{ url_for('.delete', name=plugin.id, version=version.version_str) }}">Delete</a>
+</form>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}{{ plugin.title }} — Every Door Plugins{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('.plugin', name=plugin.id) }}">← back to the plugin</a></p>
+<h1>{{ plugin.title }}</h1>
+<form action="{{ url_for('.edit', name=plugin.id) }}" method="post">
+  {{ form.csrf_token }}
+  <div class="mb-3">
+    {{ form.title.label(class_='form-label') }} {{ form.title | fc }}
+    {% for error in form.title.errors %}<div class="form-text">{{ error }}</div>{% endfor %}
+  </div>
+  <div class="mb-3">
+    {{ form.description.label(class_='form-label') }} {{ form.description(rows=7, class_='form-control') }}
+    {% for error in form.description.errors %}<div class="form-text">{{ error }}</div>{% endfor %}
+  </div>
+  <div class="mb-3">
+    {{ form.homepage.label(class_='form-label') }} {{ form.homepage | fc }}
+    {% for error in form.homepage.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+  </div>
+  <div class="mb-3">
+    {{ form.country.label(class_='form-label') }} {{ form.country | fc }}
+    {% for error in form.country.errors %}<div class="invalid-feedback">{{ error }}</div>{% endfor %}
+    <div class="form-text">See the <a target="_blank" href="https://ideditor.codes/">country coder</a> website for a list</div>
+  </div>
+  <div class="mb-3">
+    {{ form.hidden(class_='form-check-input') }} {{ form.hidden.label(class_='form-check-label') }}
+  </div>
+  <button class="btn btn-primary" type="submit">Save</button>
+  <a class="btn btn-outline-primary" href="{{ url_for('.plugin', name=plugin.id) }}">Cancel</a>
+  <a class="btn btn-outline-danger" href="{{ url_for('.delete', name=plugin.id) }}">Delete</a>
+</form>
+{% endblock %}

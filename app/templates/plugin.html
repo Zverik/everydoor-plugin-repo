@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}{{ plugin.title }} — Every Door Plugins{% endblock %}
+{% block content %}
+  <p><a href="{{ url_for('.list') }}">← back to the list</a></p>
+
+  <h1>{{ plugin.title }}{% if g.user == plugin.created_by %} <a class="btn btn-outline-primary" href="{{ url_for('.edit', name=plugin.id) }}">Edit plugin</a>{% endif %}</h1>
+  <p>Published by {{ plugin.created_by.name }}</p>
+  <div class="bg-info-subtle p-3 my-3 rounded">{{ plugin.description | markdown }}</div>
+  {% if plugin.homepage %}
+  <p><a href="{{ plugin.homepage }}" target="_blank">Open plugin home page</a></p>
+  {% endif %}
+
+  {% if plugin.last_version %}
+  <h2 class="mt-3">Download</h2>
+  <p>To install a plugin, there are three options:</p>
+  <ul>
+    <li>In the app, open Settings → Plugins → Add a plugin, and find "{{ plugin.title }}" there. Tap it and then "Add".</li>
+    <li><a href="{{ url_for('.install', name=plugin.id) }}">Click on this link</a> if you're viewing this page on a phone (will do nothing in a browser).</li>
+    <li><a href="{{ url_for('.download', name=plugin.id) }}">Download</a> the plugin file and open it in Every Door.</li>
+    <li>In the app, open Settings → Plugins, tap the QR code button in the top right corner, and scan this:</li>
+  </ul>
+  <div>{{ qrcode | safe }}</div>
+  {% endif %}
+
+  <h2 class="mt-3">Versions</h2>
+  <table class="table table-striped accordion">
+    <thead>
+      <tr>
+        <th scope="col">Version</th>
+        <th scope="col">Ok?</th>
+        <th scope="col">Downloads</th>
+        <th scope="col">Updated</th>
+        {% if g.user == plugin.created_by %}<th scope="col">Action</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in plugin.versions %}
+      <tr>
+        <td data-bs-toggle="collapse" data-bs-target="#r{{ v.version }}" data-bs-animation="true">{{ v.version_str }}</td>
+        <td data-bs-toggle="collapse" data-bs-target="#r{{ v.version }}">{{ '🚧' if v.experimental else '✅' }}</td>
+        <td data-bs-toggle="collapse" data-bs-target="#r{{ v.version }}">{{ v.downloads or '-' }}</td>
+        <td data-bs-toggle="collapse" data-bs-target="#r{{ v.version }}" title="{{ v.created_on.isoformat(' ') }}">{{ v.created_on | ago }}</td>
+        {% if g.user == plugin.created_by %}<td><a href="{{ url_for('.version', name=plugin.id, version=v.version_str) }}">edit</a></td>{% endif %}
+      </tr>
+      <tr class="{{ 'show' if loop.first else 'collapse' }} accordion-collapse" id="r{{ v.version }}" data-bs-parent=".table">
+        <td colspan="{{ 4 if g.user == plugin.created_by else 3 }}">
+  <div class="bg-light p-3 rounded">{{ v.changelog | markdown }}</div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

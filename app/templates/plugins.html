@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h2>{% if mine %}My {% endif %}Plugins</h2>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th scope="col">Title</th>
+        <th scope="col">Downloads</th>
+        {% if not mine %}<th scope="col">Author</th>{% endif %}
+        <th scope="col">Updated</th>
+        <th scope="col">Version</th>
+        <th scope="col">Local</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in plugins %}
+      <tr>
+        <td><a href="{{ url_for('.plugin', name=p.id) }}">{{ p.title }}</a></td>
+        <td>{{ p.downloads or '-' }}</td>
+        {% if not mine %}<td>{{ p.created_by.name }}</td>{% endif %}
+        <td title="{{ p.last_version.created_on.isoformat(' ') }}">{{ p.last_version.created_on | ago }}</td>
+        <td>{{ p.last_version.version_str }}</td>
+        <td>{{ p.country or '-' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

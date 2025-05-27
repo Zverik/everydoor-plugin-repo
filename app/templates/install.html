@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Installing "{{ name }}"</h1>
+
+<p>You have come here from a direct link to install an Every Door plugin.
+Your app must be opening right now, so ideally, you do not have to do
+anything, just wait a sec.</p>
+
+<p>If nothing happens, try <a href="{{ url }}">downloading the package</a>
+manually and opening it in Every Door.</p>
+
+<p>If you are reading this on a device without Every Door installed, open
+the editor on your phone, tap the three-striped Settings button, then
+"Plugins", and the QR code button in the top right corner. Point the camera
+at this code:</p>
+
+<p>{{ qrcode | safe }}</p>
+
+{% if plugin and plugin.last_version %}
+<p>Based on the supplied plugin identifier, this is the plugin we have
+in the database (you can find it on the "Add a plugin" list in the app):</p>
+<div class="card w-50 my-3">
+  <div class="card-body">
+    <h5 class="card-title">{{ plugin.title }}</h5>
+    <h6 class="card-subtitle mb-2 text-body-tertiary" style="font-size: 10pt;">Version {{ plugin.last_version.version_str }} uploaded on {{ plugin.last_version.created_on }}</h6>
+    <p class="card-text">{{ plugin.description | markdown }}</p>
+    <a class="card-link stretched-link" href="{{ url_for('.plugin', name=name) }}">View plugin</a>
+  </div>
+</div>
+{% endif %}
+
+<p>If nothing works, please contact the person who gave you this link, or
+<a href="https://github.com/Zverik/every_door/issues">open an issue</a>
+in the Every Door project, pasting the link. We are sorry.</p>
+{% endblock %}
