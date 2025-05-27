@@ -21,7 +21,7 @@ def upgrade():
     op.create_table('user',
     sa.Column('osm_id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=255), nullable=False),
-    sa.Column('is_admin', sa.Boolean(), server_default=sa.text('0'), nullable=False),
+    sa.Column('is_admin', sa.Boolean(), server_default=sa.text('false'), nullable=False),
     sa.Column('token', sa.String(length=64), nullable=False),
     sa.PrimaryKeyConstraint('osm_id')
     )
@@ -35,7 +35,7 @@ def upgrade():
     sa.Column('created_by_id', sa.Integer(), nullable=False),
     sa.Column('homepage', sa.String(), nullable=True),
     sa.Column('country', sa.String(length=32), nullable=True),
-    sa.Column('hidden', sa.Boolean(), server_default=sa.text('0'), nullable=False),
+    sa.Column('hidden', sa.Boolean(), server_default=sa.text('false'), nullable=False),
     sa.Column('icon', sa.String(), nullable=True),
     sa.ForeignKeyConstraint(['created_by_id'], ['user.osm_id'], ),
     sa.PrimaryKeyConstraint('id'),
@@ -49,7 +49,7 @@ def upgrade():
     sa.Column('downloads', sa.Integer(), server_default='0', nullable=False),
     sa.Column('created_by_id', sa.Integer(), nullable=False),
     sa.Column('changelog', sa.String(), nullable=True),
-    sa.Column('experimental', sa.Boolean(), server_default=sa.text('1'), nullable=False),
+    sa.Column('experimental', sa.Boolean(), server_default=sa.text('true'), nullable=False),
     sa.ForeignKeyConstraint(['created_by_id'], ['user.osm_id'], ),
     sa.ForeignKeyConstraint(['plugin_id'], ['plugin.id'], ),
     sa.PrimaryKeyConstraint('pk')
