@@ -31,6 +31,7 @@ countries = json.loads(read_text('app', 'countries.json'))
 @get_user
 def plugins_list():
     plugins = db.session.scalars(db.select(Plugin).order_by(Plugin.title))
+    plugins = [p for p in plugins if p.last_version]
     return render_template('plugins.html', plugins=plugins, mine=False)
 
 
@@ -80,35 +81,53 @@ def unpack_edp(package: BinaryIO) -> dict:
     except Exception as e:
         raise ValidationError(f'Cannot unzip the package: {e}')
 
-    namelist = pkg.namelist()
-    for name in namelist:
-        if '..' in name:
-            raise ValidationError(
-                f'Found "{name}" in zip file, which is wrong')
-
-    if 'plugin.yaml' not in namelist:
-        raise ValidationError('Missing plugin.yaml file')
-
-    test_result = pkg.testzip()
-    if test_result:
-        pkg.close()
-        try:
-            raise ValidationError(f'Bad zip file: {test_result}')
-        except UnicodeDecodeError:
-            raise ValidationError('Bad zip file, maybe charset issue')
-
     try:
-        content = pkg.read('plugin.yaml').decode('utf8')
-        metadata = yaml.safe_load(content)
-    except Exception as e:
-        raise ValidationError(
-            f'Error loading plugin.yaml, must be broken: {e}')
+        test_result = pkg.testzip()
+        if test_result:
+            try:
+                raise ValidationError(f'Bad zip file: {test_result}')
+            except UnicodeDecodeError:
+                raise ValidationError('Bad zip file, maybe charset issue')
 
-    # TODO: icon in the zip?
-    pkg.close()
+        namelist = pkg.namelist()
+        for name in namelist:
+            if '..' in name:
+                raise ValidationError(
+                    f'Found "{name}" in zip file, which is wrong')
 
-    if not isinstance(metadata, dict):
-        raise ValidationError('plugin.yaml should contain a dictionary')
+        if 'plugin.yaml' not in namelist:
+            raise ValidationError('Missing plugin.yaml file')
+
+        try:
+            content = pkg.read('plugin.yaml').decode('utf8')
+            metadata = yaml.safe_load(content)
+        except Exception as e:
+            raise ValidationError(
+                f'Error loading plugin.yaml, must be broken: {e}')
+
+        if not isinstance(metadata, dict):
+            raise ValidationError('plugin.yaml should contain a dictionary')
+
+        if 'icon' in metadata:
+            icon_file = f'icons/{metadata["icon"]}'
+            if icon_file not in namelist:
+                raise ValidationError(f'Missing "{icon_file}" file')
+            m_ext = re.search(r'\.(svg|gif|png|webp)$', icon_file)
+            if not m_ext:
+                raise ValidationError(
+                    'Icon should be an svg, png, gif, or webp')
+            max_icon_size = current_app.config['MAX_ICON_SIZE_KB'] * 1024
+            icon_info = pkg.getinfo(icon_file)
+            if icon_info.file_size > max_icon_size:
+                raise ValidationError(
+                    f'Icon file is larger than {max_icon_size}')
+            metadata['icon_ext'] = m_ext.group(1)
+            metadata['icon_data'] = pkg.read(icon_file)
+            if len(metadata['icon_data']) > max_icon_size:
+                raise ValidationError(
+                    f'Icon file real size is larger than {max_icon_size}')
+    finally:
+        pkg.close()
 
     req_keys = ('id', 'name', 'version', 'description')
     for k in req_keys:
@@ -135,9 +154,10 @@ def upload():
 
             plugin_id = metadata['id']
             version = PluginVersion.parse_version(metadata['version'])
-            if db.session.query(func.count(PluginVersion.pk)).where(
-                PluginVersion.plugin_id == plugin_id).where(
-                    PluginVersion.version <= version).scalar() > 0:
+            if db.session.scalar(
+                db.select(func.count(PluginVersion.pk))
+                .where(PluginVersion.plugin_id == plugin_id)
+                .where(PluginVersion.version >= version)) > 0:
                 raise ValidationError(
                     f'Version {metadata["version"]} or higher already exists.')
 
@@ -148,8 +168,10 @@ def upload():
                 'created_by': g.user,
                 'homepage': metadata.get('homepage'),
                 'country': metadata.get('country'),
+                'icon': metadata.get('icon_ext'),
             }
-            validate_country(data['country'])
+            if data['country']:
+                validate_country(data['country'])
 
             try:
                 plugin = db.session.get_one(Plugin, plugin_id)
@@ -158,11 +180,13 @@ def upload():
                 plugin.title = data['title']
                 plugin.description = data['description']
                 plugin.homepage = data['homepage']
+                plugin.icon = data['icon']
             except NoResultFound:
                 plugin = Plugin(**data)
                 db.session.add(plugin)
 
             version = PluginVersion(
+                plugin_id=plugin.id,
                 plugin=plugin,
                 version=version,
                 created_by=g.user,
@@ -174,6 +198,11 @@ def upload():
             path = version.filename
             os.makedirs(os.path.dirname(path), exist_ok=True)
             form.package.data.save(path)
+            # And the icon
+            icon_file = plugin.icon_file
+            if icon_file and 'icon_data' in metadata:
+                with open(icon_file, 'wb') as f:
+                    f.write(metadata['icon_data'])
 
             db.session.commit()
 
@@ -262,7 +291,8 @@ def delete_something(name: str, version: str | None = None):
         vobj = db.session.scalars(
             db.select(PluginVersion)
             .where(PluginVersion.plugin_id == name)
-            .where(PluginVersion.version == PluginVersion.parse__version(version))
+            .where(PluginVersion.version ==
+                   PluginVersion.parse__version(version))
             .limit(1)
         ).one_or_none()
         if vobj is None:
@@ -285,7 +315,7 @@ def install(name: str):
     url = request.args.get('url')
     if not url:
         return redirect(url_for('.plugin', name=name))
-    if not re.match(r'https?://.+/[a-zA-Z0-9_-]+\.edp$', url):
+    if not re.match(r'^https?://.+/[a-zA-Z0-9_-]+\.edp$', url):
         flash(f'URL {url} does not seem to point to an EDP file.')
         return redirect(url_for('.list'))
 
@@ -310,7 +340,8 @@ def download(name: str, version: str | None = None):
         vobj = db.session.scalars(
             db.select(PluginVersion)
             .where(PluginVersion.plugin_id == name)
-            .where(PluginVersion.version == PluginVersion.parse_version(version))
+            .where(PluginVersion.version ==
+                   PluginVersion.parse_version(version))
             .limit(1)
         ).one_or_none()
     if vobj is None:
@@ -323,6 +354,22 @@ def download(name: str, version: str | None = None):
         download_name=f'{name}.v{vobj.version_str}.edp',
         as_attachment=True,
     )
+
+
+@bp.route('/icon/<name>')
+def icon(name: str):
+    plugin = db.get_or_404(Plugin, name)
+    icon_file = plugin.icon_file
+    if not icon_file:
+        return abort(404)
+    mime = {
+        'svg': 'image/svg+xml',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+    }
+    return send_file(
+        icon_file, mimetype=mime.get(icon_file.rsplit('.', 1)[-1]))
 
 
 @bp.route('/<name>')

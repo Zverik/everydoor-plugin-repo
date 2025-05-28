@@ -8,7 +8,7 @@ from markupsafe import escape, Markup
 
 
 def markdown_format(s: str) -> str:
-    return Markup('<br>'.join(re.split(r'(?:\r\n|\r|\n)', escape(s))))
+    return Markup('<br><br>'.join(re.split(r'(?:\r\n|\r|\n){2}', escape(s))))
 
 
 def wtforms_error_class(field):
@@ -34,6 +34,7 @@ def create_app():
         OAUTH_SECRET='',
         PROXY=False,
         MAX_UPLOAD_SIZE_MB=25,
+        MAX_ICON_SIZE_KB=100,
     )
     app.config.from_pyfile('config.py', silent=True)
     app.config['MAX_CONTENT_LENGTH'] = (

@@ -46,6 +46,14 @@ class Plugin(db.Model):
     versions: Mapped[list["PluginVersion"]] = relationship(
         back_populates='plugin', order_by='desc(PluginVersion.created_on)')
 
+    @property
+    def icon_file(self) -> str | None:
+        if not self.icon:
+            return None
+        return os.path.join(
+            current_app.instance_path, 'plugins', self.id,
+            f'icon.{self.icon}')
+
     @hybrid_property
     def downloads(self):
         return sum(v.downloads for v in self.versions)

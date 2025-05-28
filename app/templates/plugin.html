@@ -3,9 +3,9 @@
 {% block content %}
   <p><a href="{{ url_for('.list') }}">← back to the list</a></p>
 
-  <h1>{{ plugin.title }}{% if g.user == plugin.created_by %} <a class="btn btn-outline-primary" href="{{ url_for('.edit', name=plugin.id) }}">Edit plugin</a>{% endif %}</h1>
+  <h1>{% if plugin.icon_file %}<img style="height: 20px; margin-right: 10px;" src="{{ url_for('.icon', name=plugin.id) }}">{% endif %}{{ plugin.title }}{% if g.user == plugin.created_by %} <a class="btn btn-outline-primary" href="{{ url_for('.edit', name=plugin.id) }}">Edit plugin</a>{% endif %}</h1>
   <p>Published by {{ plugin.created_by.name }}</p>
-  <div class="bg-info-subtle p-3 my-3 rounded">{{ plugin.description | markdown }}</div>
+  <div class="bg-info-subtle p-3 my-3 w-75 rounded">{{ plugin.description | markdown }}</div>
   {% if plugin.homepage %}
   <p><a href="{{ plugin.homepage }}" target="_blank">Open plugin home page</a></p>
   {% endif %}
@@ -44,7 +44,7 @@
       </tr>
       <tr class="{{ 'show' if loop.first else 'collapse' }} accordion-collapse" id="r{{ v.version }}" data-bs-parent=".table">
         <td colspan="{{ 4 if g.user == plugin.created_by else 3 }}">
-  <div class="bg-light p-3 rounded">{{ v.changelog | markdown }}</div>
+  <div class="bg-light p-3 rounded">{{ v.changelog or 'no changelog' | markdown }}</div>
         </td>
       </tr>
       {% endfor %}
