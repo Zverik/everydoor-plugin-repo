@@ -7,6 +7,10 @@
                {
                   "/": "/i/*",
                   "comment": "Install a plugin"
+               },
+               {
+                  "/": "/nav/*",
+                  "comment": "Navigate to a location or an OSM object"
                }
              ]
            }

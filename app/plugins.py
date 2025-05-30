@@ -25,6 +25,10 @@ from importlib.resources import read_text
 
 bp = Blueprint('plugins', __name__)
 countries = json.loads(read_text('app', 'countries.json'))
+FORBIDDEN_NAMES = [
+    'my', 'search', 'nav', 'upload', 'edit', 'delete', 'icon',
+    'login', 'auth', 'logout', 'api',
+]
 
 
 @bp.route('/', endpoint='list')
@@ -138,6 +142,10 @@ def unpack_edp(package: BinaryIO) -> dict:
         raise ValidationError(
             'Plugin id must be of latin letters, numbers, '
             'dashes, or underscores.')
+
+    if metadata['id'] in FORBIDDEN_NAMES:
+        raise ValidationError(
+            f'Plugin id is a reserved word: {metadata["id"]}')
 
     return metadata
 
