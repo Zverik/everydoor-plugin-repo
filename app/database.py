@@ -121,7 +121,8 @@ class PluginVersion(db.Model):
 latest_version_subquery = (
     db.select(PluginVersion).distinct(PluginVersion.plugin_id)
     .where(~PluginVersion.experimental)
-    .order_by(PluginVersion.plugin_id, PluginVersion.created_on.desc()).alias()
+    .order_by(PluginVersion.plugin_id, PluginVersion.created_on.desc())
+    .limit(1).alias()
 )
 latest_version_alias = aliased(PluginVersion, latest_version_subquery)
 Plugin.last_version = relationship(
@@ -132,7 +133,8 @@ Plugin.last_version = relationship(
 
 latest_eversion_subquery = (
     db.select(PluginVersion).distinct(PluginVersion.plugin_id)
-    .order_by(PluginVersion.plugin_id, PluginVersion.created_on.desc()).alias()
+    .order_by(PluginVersion.plugin_id, PluginVersion.created_on.desc())
+    .limit(1).alias()
 )
 latest_eversion_alias = aliased(PluginVersion, latest_eversion_subquery)
 Plugin.last_eversion = relationship(

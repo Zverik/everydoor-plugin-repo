@@ -1,4 +1,5 @@
 graft app/templates
 graft app/static
+graft app/well-known
 graft migrations
 include app/countries.json

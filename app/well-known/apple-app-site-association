@@ -1,0 +1,18 @@
+{
+  "applinks": {
+      "details": [
+           {
+             "appIDs": ["TM4TW7N79V.info.zverev.everydoor"],
+             "components": [
+               {
+                  "/": "/i/*",
+                  "comment": "Install a plugin"
+               }
+             ]
+           }
+       ]
+   },
+   "webcredentials": {
+      "apps": [ "TM4TW7N79V.info.zverev.everydoor" ]
+   }
+}

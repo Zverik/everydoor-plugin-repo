@@ -1,7 +1,8 @@
 import os
+import os.path
 import re
 from datetime import datetime
-from flask import Flask
+from flask import Flask, send_from_directory
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_migrate import Migrate
 from markupsafe import escape, Markup
@@ -23,6 +24,11 @@ def date_ago(dt: datetime) -> str:
     if days.days < 360:
         return f'{days.days // 30} months ago'
     return dt.strftime('%b %Y')
+
+
+def serve_well_known(name: str):
+    return send_from_directory(os.path.join(
+        os.path.dirname(__file__), 'well-known'), name)
 
 
 def create_app():
@@ -47,6 +53,8 @@ def create_app():
     app.add_template_filter(markdown_format, 'markdown')
     app.add_template_filter(wtforms_error_class, 'fc')
     app.add_template_filter(date_ago, 'ago')
+    app.add_url_rule('/.well-known/<name>', view_func=serve_well_known)
+
     from . import plugins
     app.register_blueprint(plugins.bp)
     from . import api
