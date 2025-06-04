@@ -28,7 +28,7 @@ def plugin_to_dict(plugin: Plugin, experimental=False,
 
     if plugin.icon:
         result['icon'] = url_for(
-            'plugins.icon', name=plugin.id, _external=True)
+            'plugins.icon', name=plugin.id, ext=plugin.icon, _external=True)
 
     result['downloads'] = plugin.downloads
 

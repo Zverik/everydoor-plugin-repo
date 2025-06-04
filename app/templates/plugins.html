@@ -16,7 +16,7 @@
     <tbody>
       {% for p in plugins %}
       <tr>
-        <td>{% if p.icon_file %}<img style="height: 20px;" src="{{ url_for('.icon', name=p.id) }}">{% endif %}</td>
+        <td>{% if p.icon_file %}<img style="height: 20px;" src="{{ url_for('.icon', name=p.id, ext=p.icon) }}">{% endif %}</td>
         <td><a href="{{ url_for('.plugin', name=p.id) }}">{{ p.title }}</a></td>
         <td>{{ p.downloads or '-' }}</td>
         {% if not mine %}<td>{{ p.created_by.name }}</td>{% endif %}

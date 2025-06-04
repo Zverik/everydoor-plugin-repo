@@ -365,11 +365,14 @@ def download(name: str, version: str | None = None):
 
 
 @bp.route('/icon/<name>')
-def icon(name: str):
+@bp.route('/icon/<name>.<ext>')
+def icon(name: str, ext: str | None = None):
     plugin = db.get_or_404(Plugin, name)
     icon_file = plugin.icon_file
     if not icon_file:
-        return abort(404)
+        return abort(404, 'The plugin has no icon')
+    if ext and plugin.icon != ext.lower():
+        return abort(415, f'Incorrect extension, expected {plugin.icon}')
     mime = {
         'svg': 'image/svg+xml',
         'png': 'image/png',
