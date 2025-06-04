@@ -1,10 +1,7 @@
-from flask import (
-    Blueprint, url_for, redirect, render_template, g,
-    current_app, flash, request,
-)
+from flask import Blueprint, url_for, request
 from typing import Any
 from sqlalchemy import or_
-from .database import db, Plugin, PluginVersion
+from .database import db, Plugin
 
 
 bp = Blueprint('api', __name__)
@@ -27,13 +24,15 @@ def plugin_to_dict(plugin: Plugin, experimental=False,
     if plugin.hidden:
         result['hidden'] = True
 
-    # TODO: icon url
+    if plugin.icon:
+        result['icon'] = url_for(
+            'plugins.icon', name=plugin.id, _external=True)
 
     result['downloads'] = plugin.downloads
 
     vobj = plugin.last_eversion if experimental else plugin.last_version
     if vobj:
-        result['version'] = vobj.version
+        result['version'] = vobj.version_str
         result['updated'] = vobj.created_on.isoformat(' ')
         result['experimental'] = vobj.experimental
         result['download'] = url_for(
