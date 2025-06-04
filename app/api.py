@@ -11,11 +11,13 @@ def plugin_to_dict(plugin: Plugin, experimental=False,
                    version: int | None = None):
     result: dict[str, Any] = {
         'id': plugin.id,
-        'title': plugin.title,
+        'name': plugin.title,
         'description': plugin.description,
-        'created_by': plugin.created_by.name,
+        'author': plugin.created_by.name,
+        'url': url_for('plugins.plugin', name=plugin.id,
+                       _external=True),
         'download': url_for('plugins.download', name=plugin.id,
-                            _external=True)
+                            _external=True),
     }
     if plugin.homepage:
         result['homepage'] = plugin.homepage
