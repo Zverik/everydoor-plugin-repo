@@ -44,7 +44,9 @@ class Plugin(db.Model):
     icon: Mapped[str | None]
 
     versions: Mapped[list["PluginVersion"]] = relationship(
-        back_populates='plugin', order_by='desc(PluginVersion.created_on)')
+        back_populates='plugin', order_by='desc(PluginVersion.created_on)',
+        cascade='all, delete',
+    )
 
     @property
     def icon_file(self) -> str | None:

@@ -6,6 +6,7 @@ import os.path
 import json
 import qrcode
 import qrcode.image.svg
+import shutil
 from flask import (
     Blueprint, url_for, redirect, render_template, g,
     current_app, flash, request, abort, send_file,
@@ -17,7 +18,7 @@ import wtforms.fields as wtf
 import wtforms.validators as wtv
 from typing import BinaryIO
 from sqlalchemy import func
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound, IntegrityError
 from .auth import login_required, get_user
 from .database import db, Plugin, PluginVersion
 from importlib.resources import read_text
@@ -81,7 +82,7 @@ def unpack_edp(package: BinaryIO) -> dict:
         raise ValidationError('File is too big')
 
     try:
-        pkg = zipfile.ZipFile(package)
+        pkg = zipfile.ZipFile(package, mode='r')
     except Exception as e:
         raise ValidationError(f'Cannot unzip the package: {e}')
 
@@ -132,6 +133,7 @@ def unpack_edp(package: BinaryIO) -> dict:
                     f'Icon file real size is larger than {max_icon_size}')
     finally:
         pkg.close()
+        package.seek(0)
 
     req_keys = ('id', 'name', 'version', 'description')
     for k in req_keys:
@@ -163,9 +165,9 @@ def upload():
             plugin_id = metadata['id']
             version = PluginVersion.parse_version(metadata['version'])
             if db.session.scalar(
-                db.select(func.count(PluginVersion.pk))
-                .where(PluginVersion.plugin_id == plugin_id)
-                .where(PluginVersion.version >= version)) > 0:
+                    db.select(func.count(PluginVersion.pk))
+                    .where(PluginVersion.plugin_id == plugin_id)
+                    .where(PluginVersion.version >= version)) > 0:
                 raise ValidationError(
                     f'Version {metadata["version"]} or higher already exists.')
 
@@ -190,6 +192,12 @@ def upload():
                 plugin.homepage = data['homepage']
                 plugin.icon = data['icon']
             except NoResultFound:
+                if db.session.scalar(
+                        db.select(func.count(Plugin.id))
+                        .where(Plugin.title == data['title'])) > 0:
+                    raise ValidationError(
+                        f'A plugin with the title "{data["title"]}" '
+                        'but a different id already exists.')
                 plugin = Plugin(**data)
                 db.session.add(plugin)
 
@@ -216,6 +224,8 @@ def upload():
 
             return redirect(url_for('plugins.plugin', name=plugin_id))
         except ValidationError as e:
+            flash(e)
+        except IntegrityError as e:
             flash(e)
         except OSError as e:
             flash(f'Error copying the file: {e}')
@@ -300,7 +310,7 @@ def delete_something(name: str, version: str | None = None):
             db.select(PluginVersion)
             .where(PluginVersion.plugin_id == name)
             .where(PluginVersion.version ==
-                   PluginVersion.parse__version(version))
+                   PluginVersion.parse_version(version))
             .limit(1)
         ).one_or_none()
         if vobj is None:
@@ -312,6 +322,22 @@ def delete_something(name: str, version: str | None = None):
             return redirect(url_for('.plugin', name=name))
         db.session.delete(vobj or plugin)
         db.session.commit()
+
+        # Delete files
+        try:
+            if vobj:
+                os.remove(vobj.filename)
+            else:
+                shutil.rmtree(
+                    os.path.join(
+                        current_app.instance_path, 'plugins', name),
+                    ignore_errors=True,
+                )
+        except IOError:
+            # Oh well
+            pass
+
+        # Redirect back
         if vobj:
             return redirect(url_for('.plugin', name=name))
         return redirect(url_for('.list'))
