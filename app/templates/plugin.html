@@ -12,7 +12,7 @@
 
   {% if plugin.last_version %}
   <h2 class="mt-3">Download</h2>
-  <p>To install a plugin, there are three options:</p>
+  <p>To install a plugin, there are four options:</p>
   <ul>
     <li>In the app, open Settings → Plugins → Add a plugin, and find "{{ plugin.title }}" there. Tap it and then "Add".</li>
     <li><a href="{{ url_for('.install', name=plugin.id) }}">Click on this link</a> if you're viewing this page on a phone (will do nothing in a browser).</li>

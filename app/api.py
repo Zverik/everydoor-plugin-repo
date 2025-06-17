@@ -40,6 +40,8 @@ def plugin_to_dict(plugin: Plugin, experimental=False,
         result['download'] = url_for(
             'plugins.download', name=plugin.id, version=vobj.version,
             _external=True)
+    else:
+        return None
     return result
 
 
@@ -55,7 +57,8 @@ def list_plugins():
 
     plugins = db.session.scalars(q.order_by(Plugin.title))
     exp = request.args.get('exp') == '1'
-    return [plugin_to_dict(p, exp) for p in plugins]
+    result = (plugin_to_dict(p, exp) for p in plugins)
+    return [r for r in result if r]
 
 
 @bp.route('/plugin/<name>')
