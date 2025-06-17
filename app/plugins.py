@@ -369,7 +369,7 @@ def install(name: str):
 @bp.route('/<name>.v<version>.edp')
 def download(name: str, version: str | None = None):
     plugin = db.get_or_404(Plugin, name)
-    vobj: PluginVersion | None = plugin.last_version
+    vobj: PluginVersion | None = None
     if version is not None:
         vobj = db.session.scalars(
             db.select(PluginVersion)
@@ -378,6 +378,12 @@ def download(name: str, version: str | None = None):
                    PluginVersion.parse_version(version))
             .limit(1)
         ).one_or_none()
+    else:
+        vobj = plugin.last_version
+        if vobj is None:
+            # Fall back to experimental versions.
+            # Let's hope the user knows what they are doing.
+            vobj = plugin.last_eversion
     if vobj is None:
         return abort(404, f'Version {version} not found.')
     vobj.downloads += 1
