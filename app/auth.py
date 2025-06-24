@@ -86,4 +86,4 @@ def authorize():
 def logout():
     if 'user_id' in session:
         del session['user_id']
-    return redirect(request.args.get('next', url_for('plugins.list')))
+    return redirect(url_for('plugins.list'))

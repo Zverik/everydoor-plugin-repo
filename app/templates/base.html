@@ -28,7 +28,7 @@
           <a class="btn btn-outline-primary me-2" href="{{ url_for('auth.login', next=request.url) }}">Login</a>
           {% else %}
           <a class="btn btn-primary me-2" href="{{ url_for('plugins.upload') }}">Upload</a>
-          <a class="btn btn-outline-primary me-2" href="{{ url_for('auth.logout', next=request.url) }}">Logout</a>
+          <a class="btn btn-outline-primary me-2" href="{{ url_for('auth.logout') }}">Logout</a>
           {% endif %}
         </div>
       </div>
